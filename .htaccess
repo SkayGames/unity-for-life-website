@@ -1,0 +1,24 @@
+# Force HTTPS (optional if handled upstream)
+RewriteEngine On
+RewriteCond %{HTTPS} !=on
+RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [R=301,L]
+
+# Hide referrers (globally here; or scope to specific files with FilesMatch)
+Header always set Referrer-Policy "no-referrer"
+
+# Make sure we don't block our own iframes with legacy header
+Header always unset X-Frame-Options
+
+# Only allow these sites to embed pages from compassioncore.org
+# (include both with/without www for stellotv)
+Header always set Content-Security-Policy "frame-ancestors https://stellotv.com https://www.stellotv.com https://www.compassioncore.org"
+
+# Optional hardening
+Header always set X-Content-Type-Options "nosniff"
+Header always set Permissions-Policy "geolocation=(), microphone=(), camera=()"
+Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+
+# Optional: prevent caching of the two flow pages
+<FilesMatch "^(pay-standard\.html|thank-you-us(?:\.html)?)$">
+  Header set Cache-Control "no-store, no-cache, must-revalidate, max-age=0"
+</FilesMatch>

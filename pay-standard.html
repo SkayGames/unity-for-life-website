@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="referrer" content="no-referrer" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Checkout</title>
+  <style>
+    /* Keep it flexible; avoid locking the viewport height */
+    html, body { margin:0; padding:0; background:#fff; }
+    /* Let content determine height; provide a gentle minimum for first paint */
+    #whop { min-height: 70vh; }
+  </style>
+
+  <!-- Save origin (A or B) on compassioncore.org when the iframe loads -->
+  <script>
+    (function () {
+      const o = new URLSearchParams(location.search).get('o'); // "A" or "B"
+      if (o) document.cookie = "origin=" + encodeURIComponent(o) + "; Path=/; SameSite=Lax; Secure";
+    })();
+  </script>
+</head>
+<body>
+  <!-- Whop checkout embed -->
+  <script async defer src="https://js.whop.com/static/checkout/loader.js"></script>
+  <div
+    id="whop"
+    data-whop-checkout-plan-id="plan_U8GoHWms7Plq2"
+    data-whop-checkout-theme="light"
+    style="overflow:hidden;"
+  ></div>
+
+  <!-- Auto-resize: report this page's height to the parent so the iframe adjusts -->
+  <script>
+    (function () {
+      // Throttle to avoid spamming messages during big DOM changes
+      let rafId = null;
+      function sendHeight() {
+        if (rafId) return;
+        rafId = requestAnimationFrame(function () {
+          rafId = null;
+          var h = Math.max(
+            document.documentElement.scrollHeight,
+            document.body.scrollHeight,
+            document.documentElement.offsetHeight,
+            document.body.offsetHeight
+          );
+          // Broadcast to parent. If you want to restrict, replace '*' with 'https://stellotv.com'
+          // and (optionally) 'https://www.compassioncore.org' when embedding internally.
+          window.parent.postMessage({ type: 'WHOP_EMBED_HEIGHT', height: h }, '*');
+        });
+      }
+
+      // Initial + on load of Whop
+      window.addEventListener('load', sendHeight);
+
+      // Adjust on resize / orientation changes
+      window.addEventListener('resize', sendHeight);
+      window.addEventListener('orientationchange', sendHeight);
+
+      // Observe DOM changes (checkout steps, validation, etc.)
+      new MutationObserver(sendHeight).observe(document.body, {
+        childList: true,
+        subtree: true,
+        attributes: true,
+        characterData: true
+      });
+
+      // Watch layout changes as a fallback
+      if ('ResizeObserver' in window) {
+        new ResizeObserver(sendHeight).observe(document.body);
+      }
+
+      // Heartbeat for aggressively throttled browsers
+      setInterval(sendHeight, 700);
+    })();
+  </script>
+</body>
+</html>

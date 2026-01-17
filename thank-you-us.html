@@ -1,0 +1,46 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="referrer" content="no-referrer" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Finalizing…</title>
+  <script>
+    const A_THANK_YOU = "https://stellotv.com/thank-you";            // Website A
+    const B_THANK_YOU = "https://www.compassioncore.org/thank-you.html";  // Website B (default)
+
+    function getCookie(name){
+      return document.cookie.split('; ').find(r=>r.startsWith(name+'='))?.split('=')[1];
+    }
+
+    (function () {
+      // figure target
+      const originCookie = getCookie('origin');
+      document.cookie = "origin=; Max-Age=0; Path=/; SameSite=Lax; Secure"; // clear
+      const target = (originCookie === 'A') ? A_THANK_YOU : B_THANK_YOU;
+      const msg = { type: 'WHOP_DONE', url: target };
+
+      // If iframed → ask parent to navigate
+      if (window.top !== window.self) {
+        // Try all likely parents; keep '*' as a last resort for robustness
+        try {
+          window.top.postMessage(msg, 'https://stellotv.com');
+          window.top.postMessage(msg, 'https://www.stellotv.com');
+          window.top.postMessage(msg, 'https://www.compassioncore.org');
+          window.top.postMessage(msg, '*');
+          // safety fallback: if parent doesn't act, do a normal redirect after 1.5s
+          setTimeout(() => { window.location.replace(target); }, 1500);
+        } catch (e) {
+          // absolute fallback
+          window.location.replace(target);
+        }
+      } else {
+        // Not iframed → normal redirect
+        window.location.replace(target);
+      }
+    })();
+  </script>
+  <noscript>This page requires JavaScript.</noscript>
+</head>
+<body></body>
+</html>
